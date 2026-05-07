@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PresupuestoHerrero — Calculadora de presupuestos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efeb;
+  --text: #1a1a1a; --text2: #555; --text3: #888;
+  --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+  --info-bg: #e8f0fe; --info-text: #1a56db;
+  --success-bg: #e8f7ee; --success-text: #0d6e35;
+  --warn-bg: #fef9e7; --warn-text: #9a5a00;
+  --radius: 8px; --radius-lg: 12px;
+  --accent: #1a1a1a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1c; --bg2: #252525; --bg3: #2e2e2e;
+    --text: #f0f0f0; --text2: #aaa; --text3: #666;
+    --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+    --info-bg: #1a2a4a; --info-text: #7aadff;
+    --success-bg: #1a3326; --success-text: #4caf82;
+    --warn-bg: #2e2206; --warn-text: #f5c842;
+  }
+}
+body { font-family: 'Inter', sans-serif; background: var(--bg3); color: var(--text); font-size: 15px; min-height: 100vh; }
+.app-wrapper { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.app-logo { font-size: 18px; font-weight: 600; }
+.app-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.budget-counter { font-size: 13px; color: var(--text2); }
+.tabs { display: flex; gap: 2px; margin-bottom: 1.5rem; background: var(--bg2); border-radius: var(--radius); padding: 4px; }
+.tab { flex: 1; padding: 7px 4px; font-size: 13px; font-family: inherit; cursor: pointer; border: none; background: none; color: var(--text2); border-radius: var(--radius); transition: all 0.15s; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+@media (max-width: 400px) { .tab { font-size: 11px; padding: 6px 2px; } }
+.panel { display: none; }
+.panel.active { display: block; }
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 4px; }
+input, select, textarea { width: 100%; padding: 8px 10px; font-size: 14px; font-family: inherit; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); outline: none; transition: border-color 0.15s; min-height: 44px; }
+@media (max-width: 480px) { input, select { min-height: 48px; font-size: 16px; } }
+input:focus, select:focus, textarea:focus { border-color: var(--text2); }
+textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+.row { display: grid; gap: 10px; margin-bottom: 10px; }
+.row-2 { grid-template-columns: 1fr 1fr; }
+.row-3 { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 480px) {
+  .row-2, .row-3 { grid-template-columns: 1fr; }
+}
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 14px; font-family: inherit; font-weight: 500; cursor: pointer; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); transition: all 0.15s; }
+.btn:hover { background: var(--bg3); }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
+.btn-primary:hover { opacity: 0.88; background: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+.btn-danger { border-color: #f5c6c6; color: #c0392b; background: #fff5f5; }
+.btn-danger:hover { background: #fdecea; }
+.btn-block { width: 100%; justify-content: center; }
+.work-card { border: 0.5px solid var(--border2); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 1rem; background: var(--bg); }
+.work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.work-num { font-size: 13px; font-weight: 600; color: var(--text2); }
+.material-row { display: grid; grid-template-columns: 2fr 0.8fr 1fr auto; gap: 6px; align-items: end; margin-bottom: 6px; }
+@media (max-width: 480px) {
+  .material-row { grid-template-columns: 1fr auto; grid-template-rows: auto auto; }
+  .material-row select { grid-column: 1 / 2; }
+  .material-row input:nth-child(2) { grid-column: 1 / 2; }
+  .material-row input:nth-child(3) { grid-column: 1 / 2; }
+  .material-row button { grid-row: 1; grid-column: 2; align-self: start; }
+}
+.chapa-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 10px; padding: 8px 10px; background: var(--bg2); border-radius: var(--radius); border-left: 2px solid var(--border2); }
+.mult-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 6px; }
+.mult-btn { padding: 7px 4px; font-size: 13px; text-align: center; cursor: pointer; border-radius: var(--radius); border: 0.5px solid var(--border); background: var(--bg2); color: var(--text2); font-family: inherit; transition: all 0.15s; min-height: 44px; }
+.mult-btn.selected { border-color: var(--text); background: var(--bg3); color: var(--text); font-weight: 500; }
+.precio-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .precio-row { grid-template-columns: 1fr; } }
+.total-box { background: var(--bg2); border-radius: var(--radius); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.total-label { font-size: 13px; color: var(--text2); }
+.total-value { font-size: 17px; font-weight: 600; }
+.divider { height: 0.5px; background: var(--border); margin: 14px 0; }
+.info-box { background: var(--info-bg); color: var(--info-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
+.calc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem; }
+@media (max-width: 560px) { .calc-grid { grid-template-columns: 1fr; } }
+.calc-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; }
+.calc-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.calc-result { font-size: 13px; color: var(--info-text); margin-top: 8px; font-weight: 500; min-height: 18px; }
+.hist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.hist-item:last-child { border-bottom: none; }
+.tag { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 500; }
+.tag-pendiente { background: var(--warn-bg); color: var(--warn-text); }
+.tag-aprobado { background: var(--success-bg); color: var(--success-text); }
+.tag-enobra { background: var(--info-bg); color: var(--info-text); }
+.tag-terminado { background: var(--bg3); color: var(--text2); }
+.print-work { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 0.5px solid var(--border); }
+.print-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+.print-row.grand-total { font-size: 17px; font-weight: 600; border-top: 1px solid var(--border2); margin-top: 6px; padding-top: 10px; }
+.price-input-large { font-size: 18px !important; font-weight: 600 !important; }
+@media print {
+  .tabs, .app-header, .no-print { display: none !important; }
+  #panel-calculadora, #panel-calcmat, #panel-historial { display: none !important; }
+  #panel-cliente { display: block !important; }
+  .card { border: none; padding: 0; }
+  .btn { display: none !important; }
+  body { background: white; color: black; }
+}
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <div class="app-header">
+    <div>
+      <div class="app-logo">PresupuestoHerrero</div>
+      <div class="app-sub">Calculadora profesional de presupuestos</div>
+    </div>
+    <div class="budget-counter" id="budget-counter">0 presupuestos</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('calculadora')">Calculadora</button>
+    <button class="tab" onclick="showPanel('cliente')">Vista cliente</button>
+    <button class="tab" onclick="showPanel('calcmat')">Materiales</button>
+    <button class="tab" onclick="showPanel('historial')">Historial</button>
+  </div>
+
+  <!-- CALCULADORA -->
+  <div id="panel-calculadora" class="panel active">
+    <div class="card">
+      <div class="section-label">Datos del presupuesto</div>
+      <div class="row row-3">
+        <div><label>N° presupuesto</label><input type="text" id="presup-num" value="001" /></div>
+        <div><label>Fecha</label><input type="date" id="presup-fecha" /></div>
+        <div><label>Estado</label>
+          <select id="presup-estado">
+            <option>Pendiente</option><option>Aprobado</option><option>En obra</option><option>Terminado</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="trabajos-container"></div>
+
+    <button class="btn btn-block no-print" onclick="addTrabajo()" style="margin-bottom:1rem;">
+      + Agregar trabajo
+    </button>
+
+    <div class="card">
+      <div class="section-label">Resumen</div>
+      <div class="total-box"><span class="total-label">Costo real de materiales</span><span class="total-value" id="total-materiales">$0</span></div>
+      <div class="total-box" style="margin-top:6px;"><span class="total-label">Total al cliente</span><span class="total-value" id="total-cliente">$0</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="guardarPresupuesto()">Guardar presupuesto</button>
+        <button class="btn" onclick="showPanel('cliente')">Ver para cliente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VISTA CLIENTE -->
+  <div id="panel-cliente" class="panel">
+    <div class="card no-print">
+      <div class="section-label">Opciones</div>
+      <div class="row row-2">
+        <div><label>Adelanto requerido (%)</label><input type="number" id="adelanto-pct" value="50" min="0" max="100" oninput="renderClientePreview()" /></div>
+        <div><label>Validez (días)</label><input type="number" id="validez" value="15" oninput="renderClientePreview()" /></div>
+      </div>
+      <div style="margin-bottom:10px;"><label>Condiciones de pago</label><input type="text" id="condiciones" placeholder="Ej: El saldo al finalizar la obra" oninput="renderClientePreview()" /></div>
+      <button class="btn btn-primary btn-block" onclick="window.print()">Imprimir / Guardar PDF</button>
+    </div>
+    <div class="card" id="preview-cliente"></div>
+  </div>
+
+  <!-- CALCULADORA MATERIALES -->
+  <div id="panel-calcmat" class="panel">
+    <div class="info-box">Calculá las cantidades exactas antes de cargarlas en la calculadora principal.</div>
+    <div class="calc-grid">
+      <div class="calc-card">
+        <h4>Barrotes</h4>
+        <label>Largo total (cm)</label><input type="number" id="b-largo" placeholder="ej: 120" oninput="calcBarrotes()" style="margin-bottom:6px;" />
+        <label>Separación entre barrotes (cm)</label><input type="number" id="b-sep" placeholder="ej: 10" oninput="calcBarrotes()" />
+        <div class="calc-result" id="b-result"></div>
+      </div>
+      <div class="calc-card">
+        <h4>Kg de chapa</h4>
+        <label>Largo (cm)</label><input type="number" id="c-largo" placeholder="ej: 200" oninput="calcChapa()" style="margin-bottom:6px;" />
+        <label>Ancho (cm)</label><input type="number" id="c-ancho" placeholder="ej: 100" oninput="calcChapa()" style="margin-bottom:6px;" />
+        <label>Espesor</label>
+        <select id="c-esp" onchange="calcChapa()">
+          <option value="7.85">Chapa 1mm</option>
+          <option value="11.8">Chapa 1.5mm</option>
+          <option value="15.7" selected>Chapa 2mm</option>
+          <option value="23.6">Chapa 3mm</option>
+          <option value="35.3">Chapa 4.5mm</option>
+        </select>
+        <div class="calc-result" id="c-result"></div>
+      </div>
+      <div class="calc-card">
+        <h4>Kg hierro redondo / cuadrado</h4>
+        <label>Metros lineales</label><input type="number" id="h-metros" placeholder="ej: 50" oninput="calcHierro()" style="margin-bottom:6px;" />
+        <label>Perfil</label>
+        <select id="h-perfil" onchange="calcHierro()">
+          <option value="0.617">Redondo 10mm (0.617 kg/m)</option>
+          <option value="0.888">Redondo 12mm (0.888 kg/m)</option>
+          <option value="1.21">Redondo 14mm (1.21 kg/m)</option>
+          <option value="1.39">Redondo 15mm (1.39 kg/m)</option>
+          <option value="1.58">Redondo 16mm (1.58 kg/m)</option>
+          <option value="0.79">Cuadrado 10mm (0.79 kg/m)</option>
+          <option value="1.13">Cuadrado 12mm (1.13 kg/m)</option>
+          <option value="1.54">Cuadrado 14mm (1.54 kg/m)</option>
+        </select>
+        <div class="calc-result" id="h-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div id="panel-historial" class="panel">
+    <div class="card" id="hist-container">
+      <div style="text-align:center;color:var(--text2);padding:2rem;font-size:14px;">Todavía no guardaste ningún presupuesto.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const HIERROS = [
+  "Caño estructural 20x20","Caño estructural 30x20","Caño estructural 30x30","Caño estructural 40x20","Caño estructural 40x40","Caño estructural 50x20","Caño estructural 50x30","Caño estructural 50x50","Caño estructural 60x40","Caño estructural 60x60","Caño estructural 80x40","Caño estructural 100x50",
+  "Hierro redondo 10mm","Hierro redondo 12mm","Hierro redondo 14mm","Hierro redondo 15mm","Hierro redondo 16mm",
+  "Hierro cuadrado 10mm","Hierro cuadrado 12mm","Hierro cuadrado 14mm",
+  "Planchuela 1\"","Planchuela 1¼\"","Planchuela 1½\"","Planchuela 2\"","Planchuela 3\"",
+  "Ángulo 1\"","Ángulo 1¼\"","Ángulo 1½\"","Ángulo 2\"","Ángulo 3\"",
+  "Chapa lisa 1mm","Chapa lisa 1.5mm","Chapa lisa 2mm","Chapa lisa 3mm","Chapa estriada 3mm","Chapa estriada 4.5mm","Chapa galvanizada","Chapa de piso",
+  "Electrodo 3.2mm","Electrodo 4mm","Disco de corte 115mm","Disco de corte 230mm","Disco de desbaste",
+  "Bisagra 3\"","Bisagra 4\"","Bisagra 5\"","Cerradura","Cerrojo","Herraje pivot","Manija","Pase cable","Tuerca/Tornillo surtido","Pintura anticorrosiva","Pintura esmalte","Thinner"
+];
+const CHAPA_KEYS = ["Chapa lisa 1mm","Chapa lisa 1.5mm","Chapa lisa 2mm","Chapa lisa 3mm","Chapa estriada 3mm","Chapa estriada 4.5mm","Chapa galvanizada","Chapa de piso"];
+
+let trabajos = [], presupuestos = [], trabajoCount = 0;
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  const map = { calculadora:0, cliente:1, calcmat:2, historial:3 };
+  document.querySelectorAll('.tab')[map[id]]?.classList.add('active');
+  if(id==='cliente') renderClientePreview();
+  if(id==='historial') renderHistorial();
+}
+
+function addTrabajo() {
+  trabajoCount++;
+  trabajos.push({ id: trabajoCount, desc:'', materiales:[], multiplicador:2.2, precioFinal:0, precioManual:false });
+  renderTrabajos();
+}
+
+function removeTrabajo(id) {
+  trabajos = trabajos.filter(t=>t.id!==id);
+  renderTrabajos();
+}
+
+function getMaterialCost(m) {
+  const cant = parseFloat(m.cant)||0, precio = parseFloat(m.precio)||0;
+  if(CHAPA_KEYS.includes(m.tipo) && m.chapaTipo==='doblada' && m.chapaDobladaPrecio) return cant*(parseFloat(m.chapaDobladaPrecio)||precio);
+  return cant*precio;
+}
+
+function renderTrabajos() {
+  const c = document.getElementById('trabajos-container');
+  if(!trabajos.length) { c.innerHTML='<div style="text-align:center;color:var(--text2);font-size:14px;padding:1.5rem;">Agregá un trabajo para empezar.</div>'; updateTotals(); return; }
+  c.innerHTML = trabajos.map(t => {
+    const costoMat = t.materiales.reduce((s,m)=>s+getMaterialCost(m),0);
+    const precioCalc = costoMat*t.multiplicador;
+    const precioFinal = t.precioManual ? t.precioFinal : precioCalc;
+    t.precioFinal = precioFinal;
+    const multOpts = [{l:'×2',v:2},{l:'×2 +20%',v:2.4},{l:'×3',v:3},{l:'Custom',v:'custom'}];
+    const matsHtml = t.materiales.map((m,idx)=>{
+      const isChapa = CHAPA_KEYS.includes(m.tipo);
+      return `<div class="material-row">
+        <select onchange="updateMaterial(${t.id},${idx},'tipo',this.value)">
+          ${HIERROS.map(h=>`<option${h===m.tipo?' selected':''}>${h}</option>`).join('')}
+        </select>
+        <input type="number" placeholder="Cant." value="${m.cant}" oninput="updateMaterial(${t.id},${idx},'cant',this.value)" />
+        <input type="number" placeholder="Precio unit." value="${m.precio}" oninput="updateMaterial(${t.id},${idx},'precio',this.value)" />
+        <button class="btn btn-sm btn-danger" onclick="removeMaterial(${t.id},${idx})">✕</button>
+      </div>${isChapa?`<div class="chapa-extra">
+        <div><label>Tipo</label><select onchange="updateMaterial(${t.id},${idx},'chapaTipo',this.value)"><option${m.chapaTipo!=='doblada'?' selected':''}>Lisa</option><option${m.chapaTipo==='doblada'?' selected':''} value="doblada">Doblada</option></select></div>
+        <div><label>Precio/kg doblada</label><input type="number" placeholder="Precio doblada" value="${m.chapaDobladaPrecio||''}" oninput="updateMaterial(${t.id},${idx},'chapaDobladaPrecio',this.value)" /></div>
+      </div>`:''}`
+    }).join('');
+    return `<div class="work-card">
+      <div class="work-header">
+        <span class="work-num">Trabajo ${t.id}</span>
+        <button class="btn btn-sm btn-danger" onclick="removeTrabajo(${t.id})">✕ Eliminar</button>
+      </div>
+      <label>Descripción para el cliente</label>
+      <textarea oninput="updateTrabajo(${t.id},'desc',this.value)" placeholder="Ej: Reja para ventana de 1.20×0.80 en caño estructural 30×30 con barrotes de redondo 12mm, pintura anticorrosiva...">${t.desc}</textarea>
+      <div class="divider"></div>
+      <div class="section-label">Materiales (uso interno)</div>
+      ${matsHtml}
+      <button class="btn btn-sm btn-block" onclick="addMaterial(${t.id})" style="margin-top:4px;">+ Agregar material</button>
+      <div class="divider"></div>
+      <div class="section-label">Precio</div>
+      <div class="precio-row">
+        <div>
+          <label>Multiplicador</label>
+          <div class="mult-grid">
+            ${multOpts.map(o=>`<button class="mult-btn${(o.v!=='custom'&&t.multiplicador===o.v&&!t.precioManual)||(o.v==='custom'&&t.precioManual)?' selected':''}" onclick="setMult(${t.id},'${o.v}')">${o.l}</button>`).join('')}
+          </div>
+          ${t.precioManual||![2,2.4,3].includes(t.multiplicador)?`<input type="number" placeholder="ej: 2.5" value="${t.multiplicador}" oninput="updateTrabajo(${t.id},'multiplicador',parseFloat(this.value)||2)" style="margin-top:6px;" />`:``}
+        </div>
+        <div>
+          <div class="total-box" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <span class="total-label">Costo materiales: <strong>$${costoMat.toLocaleString('es-AR',{maximumFractionDigits:0})}</strong></span>
+            <span class="total-label">Calculado: $${precioCalc.toLocaleString('es-AR',{maximumFractionDigits:0})}</span>
+            <label style="margin-top:4px;">Precio final al cliente</label>
+            <input type="number" class="price-input-large" value="${Math.round(precioFinal)}" oninput="setManualPrice(${t.id},this.value)" />
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateTotals();
+}
+
+function setMult(id,val) {
+  const t=trabajos.find(t=>t.id===id); if(!t) return;
+  if(val==='custom'){t.precioManual=true;}else{t.multiplicador=parseFloat(val);t.precioManual=false;}
+  renderTrabajos();
+}
+function setManualPrice(id,val) {
+  const t=trabajos.find(t=>t.id===id); if(!t) return;
+  t.precioManual=true; t.precioFinal=parseFloat(val)||0; updateTotals();
+}
+function updateTrabajo(id,field,val) {
+  const t=trabajos.find(t=>t.id===id); if(t){t[field]=val; if(field!=='desc') renderTrabajos(); else updateTotals();}
+}
+function addMaterial(id) {
+  const t=trabajos.find(t=>t.id===id);
+  if(t){t.materiales.push({tipo:HIERROS[0],cant:'',precio:'',chapaTipo:'lisa',chapaDobladaPrecio:''});renderTrabajos();}
+}
+function removeMaterial(id,idx) {
+  const t=trabajos.find(t=>t.id===id); if(t){t.materiales.splice(idx,1);renderTrabajos();}
+}
+function updateMaterial(id,idx,field,val) {
+  const t=trabajos.find(t=>t.id===id); if(!t||!t.materiales[idx]) return;
+  t.materiales[idx][field]=val;
+  if(field==='tipo'&&CHAPA_KEYS.includes(val)) t.materiales[idx].chapaTipo=t.materiales[idx].chapaTipo||'lisa';
+  if(field==='tipo') renderTrabajos(); else updateTotals();
+}
+function updateTotals() {
+  let tMat=0,tCli=0;
+  trabajos.forEach(t=>{
+    const cm=t.materiales.reduce((s,m)=>s+getMaterialCost(m),0);
+    tMat+=cm;
+    const pf=t.precioManual?t.precioFinal:cm*t.multiplicador;
+    t.precioFinal=pf; tCli+=pf;
+  });
+  document.getElementById('total-materiales').textContent='$'+tMat.toLocaleString('es-AR',{maximumFractionDigits:0});
+  document.getElementById('total-cliente').textContent='$'+tCli.toLocaleString('es-AR',{maximumFractionDigits:0});
+}
+
+function renderClientePreview() {
+  const num=document.getElementById('presup-num')?.value||'001';
+  const fechaRaw=document.getElementById('presup-fecha')?.value||'';
+  const fecha=fechaRaw?fechaRaw.split('-').reverse().join('/'):new Date().toLocaleDateString('es-AR');
+  const adelantoPct=parseFloat(document.getElementById('adelanto-pct')?.value)||50;
+  const validez=document.getElementById('validez')?.value||'15';
+  const condiciones=document.getElementById('condiciones')?.value||'';
+  const total=trabajos.reduce((s,t)=>s+t.precioFinal,0);
+  const adelanto=total*adelantoPct/100;
+  const multi=trabajos.length>1;
+  let html=`<div>
+    <div style="margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--border);">
+      <div style="font-size:20px;font-weight:600;margin-bottom:4px;">Presupuesto N° ${num}</div>
+      <div style="font-size:13px;color:var(--text2);">Fecha: ${fecha} &nbsp;·&nbsp; Válido por ${validez} días</div>
+    </div>`;
+  if(!trabajos.length) { html+='<div style="color:var(--text2);font-size:14px;">No hay trabajos cargados.</div>'; }
+  else {
+    trabajos.forEach((t,i)=>{
+      html+=`<div class="print-work">
+        ${multi?`<div style="font-size:12px;color:var(--text3);margin-bottom:3px;">Trabajo ${i+1}</div>`:''}
+        <div style="font-size:15px;line-height:1.6;">${t.desc||'(Sin descripción)'}</div>
+        ${multi?`<div style="font-size:15px;font-weight:500;margin-top:6px;">$${Math.round(t.precioFinal).toLocaleString('es-AR')}</div>`:''}
+      </div>`;
+    });
+    html+=`<div style="margin-top:1.5rem;">
+      ${multi?`<div class="print-row"><span>Subtotal</span><span>$${Math.round(total).toLocaleString('es-AR')}</span></div>`:''}
+      <div class="print-row grand-total"><span>Total</span><span>$${Math.round(total).toLocaleString('es-AR')}</span></div>
+      <div class="print-row"><span>Adelanto requerido (${adelantoPct}%)</span><span>$${Math.round(adelanto).toLocaleString('es-AR')}</span></div>
+      <div class="print-row"><span>Saldo al finalizar</span><span>$${Math.round(total-adelanto).toLocaleString('es-AR')}</span></div>
+    </div>`;
+    if(condiciones) html+=`<div style="margin-top:14px;font-size:13px;color:var(--text2);">Condiciones: ${condiciones}</div>`;
+  }
+  html+='</div>';
+  document.getElementById('preview-cliente').innerHTML=html;
+}
+
+function guardarPresupuesto() {
+  const num=document.getElementById('presup-num')?.value||'001';
+  const fecha=document.getElementById('presup-fecha')?.value||new Date().toISOString().split('T')[0];
+  const estado=document.getElementById('presup-estado')?.value||'Pendiente';
+  const total=trabajos.reduce((s,t)=>s+t.precioFinal,0);
+  const desc=(trabajos[0]?.desc||'').substring(0,70);
+  presupuestos.unshift({num,fecha,estado,total,desc,trabajos:JSON.parse(JSON.stringify(trabajos))});
+  document.getElementById('budget-counter').textContent=presupuestos.length+' presupuesto'+(presupuestos.length!==1?'s':'');
+  alert('Presupuesto N°'+num+' guardado.');
+}
+
+function renderHistorial() {
+  const c=document.getElementById('hist-container');
+  if(!presupuestos.length){c.innerHTML='<div style="text-align:center;color:var(--text2);padding:2rem;font-size:14px;">Todavía no guardaste ningún presupuesto.</div>';return;}
+  const tagClass={Pendiente:'pendiente',Aprobado:'aprobado','En obra':'enobra',Terminado:'terminado'};
+  c.innerHTML=presupuestos.map(p=>`<div class="hist-item">
+    <div>
+      <div style="font-weight:500;font-size:14px;">N° ${p.num} — ${p.fecha.split('-').reverse().join('/')}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:2px;">${p.desc||'Sin descripción'}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-weight:600;font-size:14px;">$${Math.round(p.total).toLocaleString('es-AR')}</span>
+      <span class="tag tag-${tagClass[p.estado]||'pendiente'}">${p.estado}</span>
+    </div>
+  </div>`).join('');
+}
+
+function calcBarrotes() {
+  const l=parseFloat(document.getElementById('b-largo').value), s=parseFloat(document.getElementById('b-sep').value);
+  document.getElementById('b-result').textContent=l&&s?`${Math.ceil(l/s)+1} barrotes para ${l}cm con ${s}cm de separación`:'';
+}
+function calcChapa() {
+  const l=parseFloat(document.getElementById('c-largo').value), a=parseFloat(document.getElementById('c-ancho').value), d=parseFloat(document.getElementById('c-esp').value);
+  if(!l||!a){document.getElementById('c-result').textContent='';return;}
+  const m2=(l*a)/10000, kg=(m2*d).toFixed(2);
+  document.getElementById('c-result').textContent=`${m2.toFixed(3)} m² → ${kg} kg`;
+}
+function calcHierro() {
+  const m=parseFloat(document.getElementById('h-metros').value), k=parseFloat(document.getElementById('h-perfil').value);
+  document.getElementById('h-result').textContent=m&&k?`${m}m × ${k}kg/m = ${(m*k).toFixed(2)} kg`:'';
+}
+
+document.getElementById('presup-fecha').value=new Date().toISOString().split('T')[0];
+addTrabajo();
+</script>
+</body>
+</html>
